@@ -6,10 +6,10 @@ function create_xenial() {
   if [ $? != 0 ]; then
     echo "Installing"
     IMG='https://cloud-images.ubuntu.com/xenial/current/xenial-server-cloudimg-amd64-disk1.img'
-    #wget $IMG
-    FILE='cirros-0.3.0-x86_64-disk.img'
+    wget $IMG
+    FILE='xenial-server-cloudimg-amd64-disk1.img'
     glance image-create --file $FILE --name \
-      'cirros' --disk-format qcow2 --container-format bare --progress
+      'ubuntu-xenial' --disk-format qcow2 --container-format bare --progress
   else
     echo "Ok"
   fi
