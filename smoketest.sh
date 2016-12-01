@@ -6,7 +6,7 @@
 # Set this to your floating IP network in pez
 NET_EXTERNAL='net04_ext'
 PCF_NET='pcf-net'
-MYVM='smoketest-rpub'
+MYVM='cfjumper'
 ROUTER='rpub'
 SECGRP='pcf-admin'
 
@@ -32,7 +32,7 @@ function create_cirros() {
 function create_xenial() {
 
   echo -n "Checking for Ubuntu Xenial: "
-  glance image-list | grep ubuntu-xenial | grep -q ACTIVE
+  glance image-list | grep -q ubuntu-xenial 
   if [ $? != 0 ]; then
     echo "Installing"
     FILE='xenial-server-cloudimg-amd64-disk1.img'
@@ -105,7 +105,6 @@ function create_ssh_key() {
 
    echo -n "Checking crypto keys: "
    if [ ! -f ~/.ssh/pcf_id_rsa.pub ]; then
-      rm -f ~/.ssh/pcf_id_id_rsa*
       echo "Installing"
       ssh-keygen -N '' -f ~/.ssh/pcf_id_rsa 
       chmod 600 ~/.ssh/pcf_id_rsa
@@ -165,10 +164,14 @@ function assign_floating_ip() {
   IP=$(nova show $MYVM |perl -lane 'print $1 if (/(172.16.*?)\s/)')
   PORT=$(neutron port-list |grep $IP | awk '{print $2}')
   neutron floatingip-associate $ID $PORT &>> /tmp/nova_boot.txt
+  sleep 5
+  FLOAT=$(nova show $MYVM|grep network|awk '{print $6}')
+
   if [ $? != 0 ]; then
     echo "Failed"
   else
     echo "Ok"
+    echo "ssh -l ubuntu -i ~/.ssh/pcf_id_rsa $FLOAT"
   fi
 }
 
@@ -215,7 +218,11 @@ function clean_up() {
    rm -f ~/.ssh/pcf_id_rsa* 
 }
 
+# This is needed on the xenial jumpbox to fix a bug.
+#sudo sh -c 'echo "127.0.0.1 $(hostname)" >> /etc/hosts'
+
 function start() {
+
    create_xenial
    create_networks
    create_router
